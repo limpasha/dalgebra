@@ -1,0 +1,11 @@
+#!/bin/bash
+./main.pl | ./to_latex_from_file.pl > try.tex
+pdflatex try.tex 
+
+rm try.aux
+rm try.log
+rm try.tex
+
+open try.pdf &
+
+

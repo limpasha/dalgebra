@@ -1,0 +1,11 @@
+#!/bin/bash
+./trace_gamma_with_gamma5.pl | ./to_latex_from_file.pl > try.tex
+latex try.tex 
+
+rm try.aux
+rm try.log
+rm try.tex
+
+open try.pdf &
+
+
