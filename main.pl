@@ -309,14 +309,14 @@ use feature qw (say);
 
 		for(my $i = $self->size-1; $i >= 0; $i--) {
 			if ($self->element($i)->kind eq 'Chiral') {	# если простая ковариантная производная: добавляем в начало массива 0
-				unshift (@detect, 0);
+				unshift (@detect, 'c' . $self->element($i)->point);
 			} else {
-				unshift (@detect, 1); # если сопряженная: добавляем 1
+				unshift (@detect, 'a' . $self->element($i)->point); # если сопряженная: добавляем 1
 			}
 		}
 
 		# проверяем совпадение минимум трех стоящих рядом признаков
-		if (join ('',@detect) =~ /(.)\1\1/){
+		if (join ('',@detect) =~ /([ca]\d+)\1\1/){
 			return 1;
 		} else {
 			return 0;
@@ -944,6 +944,12 @@ sub derivatives_commute {
 	if ($sum->[$summand]->with_points->element($multiplicand)->dpart->size == 0) {
 		return "nothing_to_do";
 	}
+
+    # выравниваем на всякий случай по индексу, если это дельта-функция; на олученный коэффициент домножаем коэффициент слагаемого
+    if (ref $sum->[$summand]->with_points->element($multiplicand) eq 'DiracDelta') {
+            my $coef = $sum->[$summand]->with_points->element($multiplicand)->index_align;
+            $sum->[$summand]->coef($coef);
+    }
 
 	# Перебираем элементы массива dpart справа налево, ищем D со строчным индексом и,
 	# если находим, антикоммутируем его. Для этого объявим дополнительные переменные:
@@ -1691,16 +1697,16 @@ $sum2[0] = Summand->new (
 	{
 		coef => 1,
 		pointless => [],
-		with_points => [ ChiralSfield->new ("F1:::-p"), DiracDelta->new("dd1_2:::k"), DiracDelta->new("dd1_4:::p-k", dpart => "D1^A D1_A D4_a D4^a"), DiracDelta->new("dd2_3:::l", dpart => "D2_b D2^b D3^B D3_B"),  DiracDelta->new("dd2_3:::k-l", dpart => "D2^C D2_C D3_c D3^c"), DiracDelta->new("dd3_4:::k"),ChiralSfield->new("f4:::-p")], 
+		with_points => [ ChiralSfield->new ("F1:::-p"), DiracDelta->new("dd1_3:::k1"), DiracDelta->new("dd1_2:::p+k1", dpart => "D1^A D1_A D2_a D2^a"), DiracDelta->new("dd2_3:::p+k1+k2", dpart => "D2^B D2_B D3_b D3^b"), DiracDelta->new("dd2_4:::k2"), DiracDelta->new("dd3_4:::p+k2", dpart => "D3^C D3_C D4_c D4^c"),ChiralSfield->new("f4:::p")], 
 	}
 ); 
 say "Было:";
 print_sum (@sum2);
 
-say "Выравниваем индекс у 0-ого слагаемого 2-ого, 3-ого и 4-ого сомножителей (дельта-функций)";
+say "Выравниваем индекс у 0-ого слагаемого 2-ого, 3-ого и 5-ого сомножителей (дельта-функций)";
 $sum2[0]->coef($sum2[0]->with_points->element(2)->index_align);
 $sum2[0]->coef($sum2[0]->with_points->element(3)->index_align);
-$sum2[0]->coef($sum2[0]->with_points->element(4)->index_align);
+$sum2[0]->coef($sum2[0]->with_points->element(5)->index_align);
 print_sum (@sum2);
 
 say "Опускаем индексы у 0-ого слагаемого";
@@ -1713,6 +1719,10 @@ say two_delta_one_naked(0,\@sum2);
 say two_delta_one_naked(0,\@sum2);
 say two_delta_one_naked(0,\@sum2);
 print_sum (@sum2);
+
+#say "Выравниваем индекс у 2-ого сомножителя";
+#$sum2[0]->coef($sum2[0]->with_points->element(2)->index_align);
+#print_sum (@sum2);
 
 say "Скоммутируем производные у 0-ого слагаемого 2-его сомножителя (дельта-функций)";
 derivatives_commute(0, 2, \@sum2);
